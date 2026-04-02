@@ -1,184 +1,364 @@
-# utils/plotters.py
+# utils/plotters.py — polished publication-quality plots
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
+from matplotlib.ticker import AutoMinorLocator
+from matplotlib.lines import Line2D
+
+# ──────────────────────────────────────────────
+# DESIGN SYSTEM
+# ──────────────────────────────────────────────
+DARK_BG   = "#0d1117"
+PANEL_BG  = "#161b22"
+GRID_CLR  = "#21262d"
+BORDER    = "#30363d"
+TEXT_PRI  = "#e6edf3"
+TEXT_SEC  = "#8b949e"
+
+# Named palette
+C_SURGE   = "#58a6ff"   # u  – electric blue
+C_SWAY    = "#f78166"   # v  – coral
+C_HEAVE   = "#3fb950"   # w  – green
+C_ROLL    = "#d2a8ff"   # φ  – lavender
+C_PITCH   = "#ffa657"   # θ  – amber
+C_YAW     = "#79c0ff"   # ψ  – sky
+C_X       = "#58a6ff"   # X force
+C_Y       = "#f78166"   # Y force
+C_K       = "#d2a8ff"   # K moment
+C_N       = "#3fb950"   # N moment
+C_RUDDER  = "#ffa657"   # δ  – amber
+C_PSI     = "#58a6ff"   # ψ  – blue
+C_PSI2    = "#79c0ff"   # ψ second ZZ
+C_TRIG    = "#f78166"   # trigger lines
+C_MARK    = "#3fb950"   # markers / annotations
+C_TRAJ    = "#58a6ff"   # trajectory line
+C_VLINE   = "#8b949e"   # vertical event lines
+C_NORTH   = "#3fb950"   # north position
+C_EAST    = "#f78166"   # east position
 
 
-# ==========================================
-# STRAIGHT LINE PLOTS
-# ==========================================
+def _apply_style(fig, axes_flat):
+    """Apply dark theme to a figure and all its axes."""
+    fig.patch.set_facecolor(DARK_BG)
+    for ax in axes_flat:
+        ax.set_facecolor(PANEL_BG)
+        ax.tick_params(colors=TEXT_SEC, labelsize=8, length=3)
+        ax.xaxis.label.set_color(TEXT_SEC)
+        ax.yaxis.label.set_color(TEXT_SEC)
+        ax.title.set_color(TEXT_PRI)
+        for spine in ax.spines.values():
+            spine.set_edgecolor(BORDER)
+        ax.grid(True, color=GRID_CLR, linewidth=0.6, linestyle="-")
+        ax.xaxis.set_minor_locator(AutoMinorLocator())
+        ax.yaxis.set_minor_locator(AutoMinorLocator())
+        ax.grid(True, which='minor', color=GRID_CLR, linewidth=0.3, alpha=0.5)
+        ax.set_xlabel("t  [s]", fontsize=8)
+
+
+def _title_style(fig, title):
+    fig.suptitle(title, color=TEXT_PRI, fontsize=13, fontweight='bold',
+                 x=0.5, y=0.98, ha='center')
+
+
+def _line(ax, x, y, color, label=None, lw=1.6, alpha=1.0, ls='-'):
+    ax.plot(x, y, color=color, linewidth=lw, alpha=alpha,
+            linestyle=ls, label=label)
+
+
+def _hline(ax, y, color=C_TRIG, lw=1.0, ls='--', alpha=0.75):
+    ax.axhline(y, color=color, linewidth=lw, linestyle=ls, alpha=alpha)
+
+
+def _vline(ax, x, color=C_VLINE, lw=1.0, ls='--', alpha=0.75):
+    ax.axvline(x, color=color, linewidth=lw, linestyle=ls, alpha=alpha)
+
+
+def _subtitle(ax, label, unit):
+    ax.set_title(f"{label}  [{unit}]", color=TEXT_PRI, fontsize=9, pad=4)
+
+
+def _legend(ax, **kw):
+    leg = ax.legend(fontsize=7.5, facecolor=DARK_BG, edgecolor=BORDER,
+                    labelcolor=TEXT_PRI, **kw)
+    return leg
+
+
+# ──────────────────────────────────────────────
+# STRAIGHT LINE
+# ──────────────────────────────────────────────
 def plot_straight_line(sol):
-    fig, axes = plt.subplots(3, 3, figsize=(15, 12))
-    fig.suptitle("Straight Line — State Variables", fontsize=15)
-
     t = sol.t
     y = sol.y
 
-    axes[0,0].plot(t, y[6]); axes[0,0].set_title("x [m]")
-    axes[0,1].plot(t, y[7]); axes[0,1].set_title("y [m]")
-    axes[0,2].plot(t, y[8]); axes[0,2].set_title("z [m]")
+    fig = plt.figure(figsize=(16, 10))
+    _title_style(fig, "Straight-Line Run — State Variables")
+    gs = gridspec.GridSpec(3, 3, figure=fig, hspace=0.55, wspace=0.38,
+                           left=0.07, right=0.97, top=0.93, bottom=0.07)
 
-    axes[1,0].plot(t, y[0]); axes[1,0].set_title("u [m/s]")
-    axes[1,1].plot(t, y[1]); axes[1,1].set_title("v [m/s]")
-    axes[1,2].plot(t, y[2]); axes[1,2].set_title("w [m/s]")
+    specs = [
+        (0, 0, y[0],           C_SURGE,  "u",   "m/s"),
+        (0, 1, y[1],           C_SWAY,   "v",   "m/s"),
+        (0, 2, y[2],           C_HEAVE,  "w",   "m/s"),
+        (1, 0, np.rad2deg(y[9]),  C_ROLL,  "φ (roll)",    "deg"),
+        (1, 1, np.rad2deg(y[10]), C_PITCH, "θ (pitch)",   "deg"),
+        (1, 2, np.rad2deg(y[11]), C_YAW,   "ψ (heading)", "deg"),
+        (2, 0, y[6],           C_NORTH,  "x (North)",  "m"),
+        (2, 1, y[7],           C_EAST,   "y (East)",   "m"),
+        (2, 2, y[12],          C_RUDDER, "n_act",  "RPM"),
+    ]
 
-    axes[2,0].plot(t, np.rad2deg(y[11])); axes[2,0].set_title("psi [deg]")
-    axes[2,1].plot(t, np.rad2deg(y[9]));  axes[2,1].set_title("phi [deg]")
-    axes[2,2].plot(t, np.rad2deg(y[10])); axes[2,2].set_title("theta [deg]")
+    axes = []
+    for row, col, data, color, label, unit in specs:
+        ax = fig.add_subplot(gs[row, col])
+        _line(ax, t, data, color)
+        _subtitle(ax, label, unit)
+        axes.append(ax)
 
-    for ax in axes.flat:
-        ax.grid(True)
-        ax.set_xlabel("t [s]")
+    _apply_style(fig, axes)
+    return fig
 
+
+def plot_trajectory(x, y_pos):
+    fig, ax = plt.subplots(figsize=(8, 6))
+    fig.patch.set_facecolor(DARK_BG)
+    ax.set_facecolor(PANEL_BG)
+
+    # Colour trajectory by time (gradient)
+    from matplotlib.collections import LineCollection
+    points  = np.array([y_pos, x]).T.reshape(-1, 1, 2)
+    segs    = np.concatenate([points[:-1], points[1:]], axis=1)
+    lc      = LineCollection(segs, cmap='cool', linewidth=2)
+    lc.set_array(np.linspace(0, 1, len(x)))
+    ax.add_collection(lc)
+    cb = fig.colorbar(lc, ax=ax, label="Progress (t=0 → t_end)")
+    cb.ax.yaxis.label.set_color(TEXT_SEC)
+    cb.ax.tick_params(colors=TEXT_SEC)
+
+    ax.scatter([y_pos[0]],  [x[0]],  color=C_MARK,   s=60, zorder=5, label="Start")
+    ax.scatter([y_pos[-1]], [x[-1]], color=C_RUDDER,  s=60, zorder=5, label="End",
+               marker='s')
+
+    ax.set_xlim(y_pos.min() - 20, y_pos.max() + 20)
+    ax.set_ylim(x.min()   - 20, x.max()   + 20)
+    ax.set_xlabel("East  [m]",  color=TEXT_SEC, fontsize=9)
+    ax.set_ylabel("North  [m]", color=TEXT_SEC, fontsize=9)
+    ax.set_title("Straight-Line Trajectory", color=TEXT_PRI, fontsize=11, fontweight='bold')
+    ax.tick_params(colors=TEXT_SEC)
+    ax.grid(True, color=GRID_CLR, linewidth=0.6)
+    for sp in ax.spines.values(): sp.set_edgecolor(BORDER)
+    _legend(ax, loc='upper left')
     plt.tight_layout()
     return fig
 
 
-def plot_trajectory(x, y):
-    fig = plt.figure(figsize=(8, 6))
-    plt.plot(y, x, 'b-', linewidth=2)
-    plt.xlabel("East [m]")
-    plt.ylabel("North [m]")
-    plt.title("Trajectory")
-    plt.grid(True)
-    plt.axis('equal')
-    return fig
-
-
-# ==========================================
-# TURNING CIRCLE PLOTS
-# ==========================================
+# ──────────────────────────────────────────────
+# TURNING CIRCLE
+# ──────────────────────────────────────────────
 def plot_turning_circle(results):
-    t = results["t"]
-    y = results["y"]
+    t        = results["t"]
+    y        = results["y"]
     t_rudder = results["t_rudder"]
 
-    phi = np.rad2deg(y[9])
-    r   = np.rad2deg(y[5])
-
-    u, v, w = y[0], y[1], y[2]
-    V = np.sqrt(u**2 + v**2 + w**2)
-
-    x = y[6]
-    y_pos = y[7]
+    phi  = np.rad2deg(y[9])
+    r    = np.rad2deg(y[5])
+    V    = np.sqrt(y[0]**2 + y[1]**2 + y[2]**2)
+    x_   = y[6]
+    y_   = y[7]
 
     fig = plt.figure(figsize=(16, 9))
-    fig.suptitle("Turning Circle", fontsize=14)
+    _title_style(fig, "Turning Circle Maneuver")
+    gs = gridspec.GridSpec(3, 2, figure=fig, hspace=0.55, wspace=0.32,
+                           left=0.07, right=0.97, top=0.93, bottom=0.07)
 
-    # Trajectory
-    ax1 = fig.add_subplot(1, 2, 1)
-    ax1.plot(x, y_pos, 'b-', linewidth=2)
-    ax1.set_title("Trajectory")
-    ax1.set_xlabel("x [m]")
-    ax1.set_ylabel("y [m]")
-    ax1.axis('equal')
-    ax1.grid(True)
+    # --- Trajectory (spans full left column) ---
+    ax_traj = fig.add_subplot(gs[:, 0])
+    from matplotlib.collections import LineCollection
+    points = np.array([y_, x_]).T.reshape(-1, 1, 2)
+    segs   = np.concatenate([points[:-1], points[1:]], axis=1)
+    lc     = LineCollection(segs, cmap='plasma', linewidth=2)
+    lc.set_array(np.linspace(0, 1, len(x_)))
+    ax_traj.add_collection(lc)
+    cb = fig.colorbar(lc, ax=ax_traj, label="Progress")
+    cb.ax.yaxis.label.set_color(TEXT_SEC); cb.ax.tick_params(colors=TEXT_SEC)
+    ax_traj.autoscale()
+    ax_traj.set_xlabel("East  [m]",  color=TEXT_SEC, fontsize=9)
+    ax_traj.set_ylabel("North  [m]", color=TEXT_SEC, fontsize=9)
+    ax_traj.set_title("Trajectory", color=TEXT_PRI, fontsize=9, pad=4)
+    ax_traj.set_aspect('equal', 'box')
+    ax_traj.set_facecolor(PANEL_BG)
+    ax_traj.tick_params(colors=TEXT_SEC)
+    ax_traj.grid(True, color=GRID_CLR, linewidth=0.6)
+    for sp in ax_traj.spines.values(): sp.set_edgecolor(BORDER)
 
-    # Roll
-    ax2 = fig.add_subplot(3, 2, 2)
-    ax2.plot(t, phi)
-    ax2.axvline(t_rudder, linestyle='--')
-    ax2.set_ylabel("phi [deg]")
-    ax2.grid(True)
+    # --- Right column: Roll, Yaw Rate, Speed ---
+    panels = [
+        (gs[0, 1], phi, C_ROLL,   "φ  (Roll)",        "deg"),
+        (gs[1, 1], r,   C_YAW,    "r  (Yaw Rate)",    "deg/s"),
+        (gs[2, 1], V,   C_SURGE,  "V  (Speed)",       "m/s"),
+    ]
+    axes_right = []
+    for gspec, data, color, label, unit in panels:
+        ax = fig.add_subplot(gspec)
+        _line(ax, t, data, color)
+        _vline(ax, t_rudder)
+        ax.annotate("rudder in", xy=(t_rudder, data[np.searchsorted(t, t_rudder)]),
+                    xytext=(t_rudder + 5, ax.get_ylim()[0]),
+                    color=C_VLINE, fontsize=6.5,
+                    arrowprops=dict(arrowstyle='->', color=C_VLINE, lw=0.8))
+        _subtitle(ax, label, unit)
+        axes_right.append(ax)
 
-    # Yaw rate
-    ax3 = fig.add_subplot(3, 2, 4)
-    ax3.plot(t, r)
-    ax3.axvline(t_rudder, linestyle='--')
-    ax3.set_ylabel("r [deg/s]")
-    ax3.grid(True)
-
-    # Velocity
-    ax4 = fig.add_subplot(3, 2, 6)
-    ax4.plot(t, V)
-    ax4.axvline(t_rudder, linestyle='--')
-    ax4.set_ylabel("V [m/s]")
-    ax4.set_xlabel("t [s]")
-    ax4.grid(True)
-
-    plt.tight_layout()
+    _apply_style(fig, axes_right)
+    fig.patch.set_facecolor(DARK_BG)
     return fig
 
 
-# ==========================================
-# ZIGZAG PLOTS
-# ==========================================
+# ──────────────────────────────────────────────
+# ZIGZAG — STATES
+# ──────────────────────────────────────────────
 def plot_zigzag_states(t, y, delta_zz):
-    fig, axes = plt.subplots(3, 3, figsize=(16, 11))
-    fig.suptitle(f"{delta_zz}/{delta_zz} ZigZag — States", fontsize=14)
+    fig = plt.figure(figsize=(16, 11))
+    _title_style(fig, f"{int(delta_zz)}/{int(delta_zz)} ZigZag — State Variables")
+    gs = gridspec.GridSpec(3, 3, figure=fig, hspace=0.55, wspace=0.38,
+                           left=0.07, right=0.97, top=0.93, bottom=0.07)
 
-    axes[0,0].plot(t, y[0]); axes[0,0].set_title("u")
-    axes[0,1].plot(t, y[1]); axes[0,1].set_title("v")
-    axes[0,2].plot(t, np.rad2deg(y[3])); axes[0,2].set_title("p")
+    psi_wrapped = (np.rad2deg(y[11]) + 180) % 360 - 180
 
-    axes[1,0].plot(t, np.rad2deg(y[4])); axes[1,0].set_title("q")
-    axes[1,1].plot(t, np.rad2deg(y[5])); axes[1,1].set_title("r")
-    axes[1,2].set_visible(False)
+    specs = [
+        (0, 0, y[0],              C_SURGE,  "u",            "m/s"),
+        (0, 1, y[1],              C_SWAY,   "v",            "m/s"),
+        (0, 2, np.rad2deg(y[3]), C_ROLL,   "p (roll rate)",  "deg/s"),
+        (1, 0, np.rad2deg(y[4]), C_PITCH,  "q (pitch rate)", "deg/s"),
+        (1, 1, np.rad2deg(y[5]), C_YAW,    "r (yaw rate)",   "deg/s"),
+        (2, 0, np.rad2deg(y[9]),  C_ROLL,   "φ (roll)",       "deg"),
+        (2, 1, np.rad2deg(y[10]), C_PITCH,  "θ (pitch)",      "deg"),
+    ]
 
-    axes[2,0].plot(t, np.rad2deg(y[9])); axes[2,0].set_title("phi")
-    axes[2,1].plot(t, np.rad2deg(y[10])); axes[2,1].set_title("theta")
+    axes = []
+    for row, col, data, color, label, unit in specs:
+        ax = fig.add_subplot(gs[row, col])
+        _line(ax, t, data, color)
+        _subtitle(ax, label, unit)
+        axes.append(ax)
 
-    axes[2,2].plot(t, np.rad2deg(y[11]))
-    axes[2,2].axhline(delta_zz, linestyle='--')
-    axes[2,2].axhline(-delta_zz, linestyle='--')
-    axes[2,2].set_title("psi")
+    # Hide unused panel [1,2]
+    ax_hide = fig.add_subplot(gs[1, 2])
+    ax_hide.set_visible(False)
 
-    for ax in axes.flat:
-        ax.grid(True)
-        ax.set_xlabel("t [s]")
+    # ψ panel with trigger lines
+    ax_psi = fig.add_subplot(gs[2, 2])
+    _line(ax_psi, t, psi_wrapped, C_PSI, label="ψ")
+    _hline(ax_psi,  delta_zz, C_TRIG)
+    _hline(ax_psi, -delta_zz, C_TRIG)
+    ax_psi.fill_between(t, -delta_zz, delta_zz, color=C_TRIG, alpha=0.06)
+    _subtitle(ax_psi, "ψ (heading)", "deg")
+    _legend(ax_psi, loc='upper right')
+    axes.append(ax_psi)
 
-    plt.tight_layout()
+    _apply_style(fig, axes)
     return fig
 
 
+# ──────────────────────────────────────────────
+# ZIGZAG — FORCES & MOMENTS
+# ──────────────────────────────────────────────
 def plot_zigzag_forces(t, X, Y, K, N):
-    fig, axes = plt.subplots(2, 2, figsize=(14, 9))
-    fig.suptitle("ZigZag — Forces & Moments", fontsize=14)
+    fig = plt.figure(figsize=(14, 9))
+    _title_style(fig, "ZigZag — Hydrodynamic Forces & Moments")
+    gs = gridspec.GridSpec(2, 2, figure=fig, hspace=0.45, wspace=0.35,
+                           left=0.08, right=0.97, top=0.93, bottom=0.08)
 
-    axes[0,0].plot(t, X/1000); axes[0,0].set_title("X [kN]")
-    axes[0,1].plot(t, Y/1000); axes[0,1].set_title("Y [kN]")
-    axes[1,0].plot(t, K/1000); axes[1,0].set_title("K [kN·m]")
-    axes[1,1].plot(t, N/1000); axes[1,1].set_title("N [kN·m]")
+    panels = [
+        (0, 0, X/1e3, C_X,  "X  (Surge Force)", "kN"),
+        (0, 1, Y/1e3, C_Y,  "Y  (Sway Force)",  "kN"),
+        (1, 0, K/1e3, C_K,  "K  (Roll Moment)", "kN·m"),
+        (1, 1, N/1e3, C_N,  "N  (Yaw Moment)",  "kN·m"),
+    ]
 
-    for ax in axes.flat:
-        ax.grid(True)
-        ax.set_xlabel("t [s]")
+    axes = []
+    for row, col, data, color, label, unit in panels:
+        ax = fig.add_subplot(gs[row, col])
+        _line(ax, t, data, color)
+        _hline(ax, 0, color=BORDER, lw=0.8, alpha=0.9, ls='-')
+        ax.fill_between(t, 0, data, color=color, alpha=0.12)
+        _subtitle(ax, label, unit)
+        axes.append(ax)
 
-    plt.tight_layout()
+    _apply_style(fig, axes)
     return fig
 
 
+# ──────────────────────────────────────────────
+# ZIGZAG — ITTC STANDARD PLOT
+# ──────────────────────────────────────────────
 def plot_zigzag_standard(t, y, delta_cmd, delta_zz):
-    fig, axes = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
-    fig.suptitle("ZigZag — ITTC Standard Plot", fontsize=14)
+    psi_wrapped = (np.rad2deg(y[11]) + 180) % 360 - 180
 
-    psi = np.rad2deg(y[11])
+    fig, axes = plt.subplots(2, 1, figsize=(13, 8), sharex=True)
+    _title_style(fig, f"{int(delta_zz)}/{int(delta_zz)} ZigZag — ITTC Standard Plot")
+    fig.subplots_adjust(hspace=0.12, left=0.08, right=0.97, top=0.92, bottom=0.09)
 
-    axes[0].plot(t, psi, label="psi")
-    axes[0].axhline(delta_zz, linestyle='--')
-    axes[0].axhline(-delta_zz, linestyle='--')
-    axes[0].set_ylabel("psi [deg]")
-    axes[0].legend()
-    axes[0].grid(True)
+    # ψ panel
+    ax0 = axes[0]
+    _line(ax0, t, psi_wrapped, C_PSI, label="ψ  (heading)")
+    _hline(ax0,  delta_zz, C_TRIG)
+    _hline(ax0, -delta_zz, C_TRIG)
+    ax0.fill_between(t, -delta_zz, delta_zz, color=C_TRIG, alpha=0.07)
+    # shade overshoot regions
+    ax0.fill_between(t, delta_zz, psi_wrapped,
+                     where=(psi_wrapped > delta_zz),
+                     color=C_MARK, alpha=0.18, label=f"Overshoot (stbd)")
+    ax0.fill_between(t, psi_wrapped, -delta_zz,
+                     where=(psi_wrapped < -delta_zz),
+                     color=C_RUDDER, alpha=0.18, label=f"Overshoot (port)")
+    ax0.set_ylabel("ψ  [deg]", color=TEXT_SEC, fontsize=9)
+    _legend(ax0, loc='upper right')
 
-    axes[1].plot(t, delta_cmd, label="delta", color='orange')
-    axes[1].set_ylabel("delta [deg]")
-    axes[1].set_xlabel("t [s]")
-    axes[1].legend()
-    axes[1].grid(True)
+    # δ panel
+    ax1 = axes[1]
+    _line(ax1, t, delta_cmd, C_RUDDER, label="δ  (rudder command)")
+    _hline(ax1, 0, color=BORDER, lw=0.8, ls='-')
+    ax1.fill_between(t, 0, delta_cmd, color=C_RUDDER, alpha=0.15)
+    ax1.set_ylabel("δ  [deg]", color=TEXT_SEC, fontsize=9)
+    ax1.set_xlabel("t  [s]",   color=TEXT_SEC, fontsize=9)
+    _legend(ax1, loc='upper right')
 
-    plt.tight_layout()
+    _apply_style(fig, list(axes))
     return fig
 
 
+# ──────────────────────────────────────────────
+# ZIGZAG — TRAJECTORY
+# ──────────────────────────────────────────────
 def plot_zigzag_trajectory(y):
-    fig = plt.figure(figsize=(8, 6))
+    x_    = y[6]
+    y_pos = y[7]
 
-    plt.plot(y[7], y[6], 'b-')
-    plt.xlabel("East [m]")
-    plt.ylabel("North [m]")
-    plt.title("ZigZag Trajectory")
-    plt.axis('equal')
-    plt.grid(True)
+    fig, ax = plt.subplots(figsize=(9, 7))
+    fig.patch.set_facecolor(DARK_BG)
+    ax.set_facecolor(PANEL_BG)
 
+    from matplotlib.collections import LineCollection
+    points = np.array([y_pos, x_]).T.reshape(-1, 1, 2)
+    segs   = np.concatenate([points[:-1], points[1:]], axis=1)
+    lc     = LineCollection(segs, cmap='cool', linewidth=2.2)
+    lc.set_array(np.linspace(0, 1, len(x_)))
+    ax.add_collection(lc)
+    cb = fig.colorbar(lc, ax=ax, label="Progress (t=0 → t_end)")
+    cb.ax.yaxis.label.set_color(TEXT_SEC); cb.ax.tick_params(colors=TEXT_SEC)
+
+    ax.scatter([y_pos[0]],  [x_[0]],   color=C_MARK,   s=70, zorder=5, label="Start", marker='o')
+    ax.scatter([y_pos[-1]], [x_[-1]],  color=C_RUDDER, s=70, zorder=5, label="End",   marker='s')
+
+    ax.autoscale()
+    ax.set_aspect('equal', 'datalim')
+    ax.set_xlabel("East  [m]",  color=TEXT_SEC, fontsize=9)
+    ax.set_ylabel("North  [m]", color=TEXT_SEC, fontsize=9)
+    ax.set_title("ZigZag Trajectory", color=TEXT_PRI, fontsize=11, fontweight='bold')
+    ax.tick_params(colors=TEXT_SEC)
+    ax.grid(True, color=GRID_CLR, linewidth=0.6)
+    for sp in ax.spines.values(): sp.set_edgecolor(BORDER)
+    _legend(ax, loc='upper left')
+    plt.tight_layout()
     return fig

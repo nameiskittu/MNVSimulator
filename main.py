@@ -26,7 +26,7 @@ from utils.plotters import (
 # ==========================================
 # USER CONTROLS (TOGGLES)
 # ==========================================
-RUN_STRAIGHT_LINE  = True
+RUN_STRAIGHT_LINE  = False
 RUN_TURNING_CIRCLE = False
 RUN_ZIGZAG         = True
 
