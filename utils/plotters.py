@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from matplotlib.ticker import AutoMinorLocator
 from matplotlib.lines import Line2D
+from matplotlib.collections import LineCollection
 
 # ──────────────────────────────────────────────
 # DESIGN SYSTEM
@@ -125,7 +126,6 @@ def plot_trajectory(x, y_pos):
     ax.set_facecolor(PANEL_BG)
 
     # Colour trajectory by time (gradient)
-    from matplotlib.collections import LineCollection
     points  = np.array([y_pos, x]).T.reshape(-1, 1, 2)
     segs    = np.concatenate([points[:-1], points[1:]], axis=1)
     lc      = LineCollection(segs, cmap='cool', linewidth=2)
@@ -173,7 +173,6 @@ def plot_turning_circle(results):
 
     # --- Trajectory (spans full left column) ---
     ax_traj = fig.add_subplot(gs[:, 0])
-    from matplotlib.collections import LineCollection
     points = np.array([y_, x_]).T.reshape(-1, 1, 2)
     segs   = np.concatenate([points[:-1], points[1:]], axis=1)
     lc     = LineCollection(segs, cmap='plasma', linewidth=2)
@@ -215,7 +214,112 @@ def plot_turning_circle(results):
 
 
 # ──────────────────────────────────────────────
-# ZIGZAG — STATES
+# ZIGZAG — COMPREHENSIVE DASHBOARD
+# ──────────────────────────────────────────────
+def plot_zigzag_dashboard(t, y, delta_cmd, delta_zz, X, Y, K, N):
+    """
+    Combines Trajectory, ITTC Standard, Forces, and Key States into a single window.
+    """
+    psi_wrapped = (np.rad2deg(y[11]) + 180) % 360 - 180
+    x_ = y[6]
+    y_pos = y[7]
+    u = y[0]
+    v = y[1]
+    r = np.rad2deg(y[5])
+    phi = np.rad2deg(y[9])
+
+    fig = plt.figure(figsize=(18, 12))
+    _title_style(fig, f"{int(delta_zz)}/{int(delta_zz)} ZigZag Maneuver")
+    
+    # 4 rows, 4 columns layout
+    gs = gridspec.GridSpec(4, 4, figure=fig, hspace=0.6, wspace=0.4,
+                           left=0.06, right=0.97, top=0.92, bottom=0.06)
+
+    axes_to_style = []
+
+    # 1. TRAJECTORY (Spans top left: 2 rows, 2 columns)
+    ax_traj = fig.add_subplot(gs[0:2, 0:2])
+    points = np.array([y_pos, x_]).T.reshape(-1, 1, 2)
+    segs = np.concatenate([points[:-1], points[1:]], axis=1)
+    lc = LineCollection(segs, cmap='cool', linewidth=2.2)
+    lc.set_array(np.linspace(0, 1, len(x_)))
+    ax_traj.add_collection(lc)
+    
+    cb = fig.colorbar(lc, ax=ax_traj, pad=0.02)
+    cb.set_label("Progress (t=0 → t_end)", color=TEXT_SEC, fontsize=9)
+    cb.ax.yaxis.label.set_color(TEXT_SEC)
+    cb.ax.tick_params(colors=TEXT_SEC)
+
+    ax_traj.scatter([y_pos[0]], [x_[0]], color=C_MARK, s=70, zorder=5, label="Start", marker='o')
+    ax_traj.scatter([y_pos[-1]], [x_[-1]], color=C_RUDDER, s=70, zorder=5, label="End", marker='s')
+
+    ax_traj.autoscale()
+    ax_traj.set_aspect('equal', 'datalim')
+    ax_traj.set_xlabel("East  [m]", color=TEXT_SEC, fontsize=9)
+    ax_traj.set_ylabel("North  [m]", color=TEXT_SEC, fontsize=9)
+    ax_traj.set_title("Trajectory", color=TEXT_PRI, fontsize=11, fontweight='bold')
+    _legend(ax_traj, loc='upper left')
+    axes_to_style.append(ax_traj)
+
+    # 2. ITTC STANDARD (Spans top right: 2 rows, 2 columns)
+    # Heading (Row 0, Cols 2-3)
+    ax_psi = fig.add_subplot(gs[0, 2:4])
+    _line(ax_psi, t, psi_wrapped, C_PSI, label="ψ  (heading)")
+    _hline(ax_psi, delta_zz, C_TRIG)
+    _hline(ax_psi, -delta_zz, C_TRIG)
+    ax_psi.fill_between(t, -delta_zz, delta_zz, color=C_TRIG, alpha=0.07)
+    ax_psi.fill_between(t, delta_zz, psi_wrapped, where=(psi_wrapped > delta_zz),
+                        color=C_MARK, alpha=0.18, label="Overshoot (stbd)")
+    ax_psi.fill_between(t, psi_wrapped, -delta_zz, where=(psi_wrapped < -delta_zz),
+                        color=C_RUDDER, alpha=0.18, label="Overshoot (port)")
+    _subtitle(ax_psi, "Heading", "deg")
+    _legend(ax_psi, loc='upper right')
+    axes_to_style.append(ax_psi)
+
+    # Rudder (Row 1, Cols 2-3)
+    ax_delta = fig.add_subplot(gs[1, 2:4], sharex=ax_psi)
+    _line(ax_delta, t, delta_cmd, C_RUDDER, label="δ  (rudder cmd)")
+    _hline(ax_delta, 0, color=BORDER, lw=0.8, ls='-')
+    ax_delta.fill_between(t, 0, delta_cmd, color=C_RUDDER, alpha=0.15)
+    _subtitle(ax_delta, "Rudder Angle", "deg")
+    _legend(ax_delta, loc='upper right')
+    axes_to_style.append(ax_delta)
+
+    # 3. FORCES & MOMENTS (Row 2, all 4 columns)
+    panels_forces = [
+        (gs[2, 0], X/1e3, C_X, "X (Surge Force)", "kN"),
+        (gs[2, 1], Y/1e3, C_Y, "Y (Sway Force)", "kN"),
+        (gs[2, 2], K/1e3, C_K, "K (Roll Moment)", "kN·m"),
+        (gs[2, 3], N/1e3, C_N, "N (Yaw Moment)", "kN·m"),
+    ]
+    for position, data, color, label, unit in panels_forces:
+        ax = fig.add_subplot(position)
+        _line(ax, t, data, color)
+        _hline(ax, 0, color=BORDER, lw=0.8, alpha=0.9, ls='-')
+        ax.fill_between(t, 0, data, color=color, alpha=0.12)
+        _subtitle(ax, label, unit)
+        axes_to_style.append(ax)
+
+    # 4. KEY STATE VARIABLES (Row 3, all 4 columns)
+    panels_states = [
+        (gs[3, 0], u, C_SURGE, "u (Surge Velocity)", "m/s"),
+        (gs[3, 1], v, C_SWAY, "v (Sway Velocity)", "m/s"),
+        (gs[3, 2], r, C_YAW, "r (Yaw Rate)", "deg/s"),
+        (gs[3, 3], phi, C_ROLL, "φ (Roll Angle)", "deg"),
+    ]
+    for position, data, color, label, unit in panels_states:
+        ax = fig.add_subplot(position, sharex=ax_psi)
+        _line(ax, t, data, color)
+        _subtitle(ax, label, unit)
+        axes_to_style.append(ax)
+
+    _apply_style(fig, axes_to_style)
+    
+    return fig
+
+
+# ──────────────────────────────────────────────
+# ZIGZAG — INDIVIDUAL PLOTS (Kept for backwards compatibility)
 # ──────────────────────────────────────────────
 def plot_zigzag_states(t, y, delta_zz):
     fig = plt.figure(figsize=(16, 11))
@@ -242,11 +346,9 @@ def plot_zigzag_states(t, y, delta_zz):
         _subtitle(ax, label, unit)
         axes.append(ax)
 
-    # Hide unused panel [1,2]
     ax_hide = fig.add_subplot(gs[1, 2])
     ax_hide.set_visible(False)
 
-    # ψ panel with trigger lines
     ax_psi = fig.add_subplot(gs[2, 2])
     _line(ax_psi, t, psi_wrapped, C_PSI, label="ψ")
     _hline(ax_psi,  delta_zz, C_TRIG)
@@ -260,9 +362,6 @@ def plot_zigzag_states(t, y, delta_zz):
     return fig
 
 
-# ──────────────────────────────────────────────
-# ZIGZAG — FORCES & MOMENTS
-# ──────────────────────────────────────────────
 def plot_zigzag_forces(t, X, Y, K, N):
     fig = plt.figure(figsize=(14, 9))
     _title_style(fig, "ZigZag — Hydrodynamic Forces & Moments")
@@ -289,9 +388,6 @@ def plot_zigzag_forces(t, X, Y, K, N):
     return fig
 
 
-# ──────────────────────────────────────────────
-# ZIGZAG — ITTC STANDARD PLOT
-# ──────────────────────────────────────────────
 def plot_zigzag_standard(t, y, delta_cmd, delta_zz):
     psi_wrapped = (np.rad2deg(y[11]) + 180) % 360 - 180
 
@@ -299,23 +395,20 @@ def plot_zigzag_standard(t, y, delta_cmd, delta_zz):
     _title_style(fig, f"{int(delta_zz)}/{int(delta_zz)} ZigZag — ITTC Standard Plot")
     fig.subplots_adjust(hspace=0.12, left=0.08, right=0.97, top=0.92, bottom=0.09)
 
-    # ψ panel
     ax0 = axes[0]
     _line(ax0, t, psi_wrapped, C_PSI, label="ψ  (heading)")
     _hline(ax0,  delta_zz, C_TRIG)
     _hline(ax0, -delta_zz, C_TRIG)
     ax0.fill_between(t, -delta_zz, delta_zz, color=C_TRIG, alpha=0.07)
-    # shade overshoot regions
     ax0.fill_between(t, delta_zz, psi_wrapped,
                      where=(psi_wrapped > delta_zz),
-                     color=C_MARK, alpha=0.18, label=f"Overshoot (stbd)")
+                     color=C_MARK, alpha=0.18, label="Overshoot (stbd)")
     ax0.fill_between(t, psi_wrapped, -delta_zz,
                      where=(psi_wrapped < -delta_zz),
-                     color=C_RUDDER, alpha=0.18, label=f"Overshoot (port)")
+                     color=C_RUDDER, alpha=0.18, label="Overshoot (port)")
     ax0.set_ylabel("ψ  [deg]", color=TEXT_SEC, fontsize=9)
     _legend(ax0, loc='upper right')
 
-    # δ panel
     ax1 = axes[1]
     _line(ax1, t, delta_cmd, C_RUDDER, label="δ  (rudder command)")
     _hline(ax1, 0, color=BORDER, lw=0.8, ls='-')
@@ -328,9 +421,6 @@ def plot_zigzag_standard(t, y, delta_cmd, delta_zz):
     return fig
 
 
-# ──────────────────────────────────────────────
-# ZIGZAG — TRAJECTORY
-# ──────────────────────────────────────────────
 def plot_zigzag_trajectory(y):
     x_    = y[6]
     y_pos = y[7]
@@ -339,7 +429,6 @@ def plot_zigzag_trajectory(y):
     fig.patch.set_facecolor(DARK_BG)
     ax.set_facecolor(PANEL_BG)
 
-    from matplotlib.collections import LineCollection
     points = np.array([y_pos, x_]).T.reshape(-1, 1, 2)
     segs   = np.concatenate([points[:-1], points[1:]], axis=1)
     lc     = LineCollection(segs, cmap='cool', linewidth=2.2)

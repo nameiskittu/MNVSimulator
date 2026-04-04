@@ -16,18 +16,15 @@ from utils.plotters import (
     plot_straight_line,
     plot_trajectory,
     plot_turning_circle,
-    plot_zigzag_states,
-    plot_zigzag_forces,
-    plot_zigzag_standard,
-    plot_zigzag_trajectory
+    plot_zigzag_dashboard  # <-- Imported the new dashboard function
 )
 
 
 # ==========================================
 # USER CONTROLS (TOGGLES)
 # ==========================================
-RUN_STRAIGHT_LINE  = True
-RUN_TURNING_CIRCLE = True
+RUN_STRAIGHT_LINE  = False
+RUN_TURNING_CIRCLE = False
 RUN_ZIGZAG         = True
 
 
@@ -116,10 +113,17 @@ if RUN_ZIGZAG:
         print(f"Overshoot Starboard = {os_stbd:.2f} deg")
         print(f"Overshoot Port      = {os_port:.2f} deg")
 
-        fig1 = plot_zigzag_states(t, y, delta)
-        fig2 = plot_zigzag_forces(t, X, Y, K, N)
-        fig3 = plot_zigzag_standard(t, y, d, delta)
-        fig4 = plot_zigzag_trajectory(y)
+        # --> Replaced the 4 separate plots with the single dashboard
+        fig_zz = plot_zigzag_dashboard(
+            t=t, 
+            y=y, 
+            delta_cmd=d, 
+            delta_zz=delta, 
+            X=X, 
+            Y=Y, 
+            K=K, 
+            N=N
+        )
 
 
 # ==========================================
