@@ -1,0 +1,443 @@
+\documentclass[12pt,a4paper]{report}
+
+% --- Font and Language ---
+\usepackage[utf8]{inputenc}
+\usepackage{mathptmx} % Uses Times New Roman-like font
+\usepackage[T1]{fontenc}
+\usepackage{xcolor}
+% --- Formatting Packages ---
+\usepackage{geometry}
+\geometry{
+    a4paper,
+    left=1.5in,
+    right=1in,
+    top=1in,
+    bottom=1in
+}
+\usepackage{setspace}
+\onehalfspacing % Standard 1.5 line spacing
+
+% --- Graphics and Math ---
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{bm}
+
+% --- Tables and Layout ---
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{titlesec}
+\usepackage{indentfirst} 
+
+% --- Chapter Title Formatting (Updated to match screenshot) ---
+% Left aligned, large bold font, "Chapter X" on one line, Title on the next
+\titleformat{\chapter}[display]
+  {\normalfont\Huge\bfseries\raggedright}{\chaptertitlename\ \thechapter}{10pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{0pt}{30pt} % Spacing around chapter headings
+\titleformat{name=\chapter,numberless}[display]{\normalfont\Huge\bfseries\itshape\centering}{}{0pt}{\Huge}
+\begin{document}
+
+% --- Title Page ---
+\begin{titlepage}
+    \centering
+    \vspace*{0.5cm}
+    
+    % Top horizontal line
+    \rule{\textwidth}{1.5pt} \\[1cm]
+    
+    % Red, bold title broken into two lines
+    {\fontsize{20pt}{24pt}\selectfont \textcolor{red}{\textbf{Modeling and Simulation of a Maneuvering \\ Ship Using a 6-DOF Dynamic Model}} \par}
+    
+    \vspace{1cm}
+    % Bottom horizontal line
+    \rule{\textwidth}{1.5pt}
+    
+    \vspace{2cm}
+    
+    {\fontsize{14pt}{16pt}\selectfont \textit{By} \par}
+    \vspace{0.5cm}
+    {\fontsize{14pt}{16pt}\selectfont YASHWANTH KRISHNA CHITYALA \par}
+    {\fontsize{14pt}{16pt}\selectfont ID No. 2025PHRP0907G \par}
+    
+    \vspace{1.5cm}
+    {\fontsize{14pt}{16pt}\selectfont \textit{Under the supervision of:} \par}
+    {\fontsize{14pt}{16pt}\selectfont Dr. Prasad Vinayak Patil \par}
+    
+    \vfill
+    
+    % Ensure you have 'bits_logo.png' in your LaTeX directory
+    \includegraphics[width=6.5cm]{bits_logo.png} \par 
+    
+    \vfill
+    
+    {\fontsize{14pt}{16pt}\selectfont BIRLA INSTITUTE OF TECHNOLOGY AND SCIENCE PILANI, GOA CAMPUS \par}
+    \vspace{0.3cm} % slight gap before the date
+    {\fontsize{14pt}{16pt}\selectfont \textcolor{red}{February 2026} \par}
+    
+\end{titlepage}
+
+% --- Declaration of Authorship ---
+\chapter*{Declaration of Authorship}
+\addcontentsline{toc}{chapter}{Declaration of Authorship}
+
+I, \textbf{YASHWANTH KRISHNA CHITYALA}, declare that this PhD. Thesis Progress titled, ‘Modeling and Simulation of a Maneuvering Ship Using a 6-DOF Dynamic Model’ and the work presented in it are my own.
+
+\vspace{0.5cm}
+\noindent I confirm that:
+\begin{itemize}
+    \item This work was done wholly or mainly while in candidature for a Doctoral degree at this University.
+    \item Where any part of this thesis has previously been submitted for a degree or any other qualification at this University or any other institution, this has been clearly stated.
+    \item Where I have consulted the published work of others, this is always clearly attributed.
+    \item Where I have quoted from the work of others, the source is always given.
+    \item With the exception of such quotations, this thesis is entirely my own work.
+    \item I have acknowledged all main sources of help.
+    \item Where the thesis is based on work done by myself jointly with others, I have made clear exactly what was done by others and what I have contributed myself.
+\end{itemize}
+
+\vspace{1.5cm}
+\noindent Signed: \textbf{YASHWANTH KRISHNA CHITYALA} \\
+\noindent Date: 8 / April / 2026
+
+\clearpage
+
+% --- Certificate ---
+\chapter*{Certificate}
+\addcontentsline{toc}{chapter}{Certificate}
+
+This is to certify that the thesis entitled, “\textbf{Modeling and Simulation of a Maneuvering Ship Using a 6-DOF Dynamic Model}” and submitted by \textbf{YASHWANTH KRISHNA CHITYALA} ID No. \textbf{2025PHRP0907G} embodies the work done by him under my supervision.
+
+\vspace{3cm}
+
+% --- Signature Block (Updated to match screenshot) ---
+\noindent
+\begin{minipage}[t]{0.45\textwidth}
+    \vspace{0pt} % Aligns tops of minipages
+    \rule{\textwidth}{0.5pt} \\[2mm] % Signature line
+    \textit{Supervisor} \\[1mm]
+    Dr. Prasad Vinayak Patil \\
+    Assistant Professor Mechanical Department \\
+    BITS-Pilani Goa Campus \\
+    Date:
+\end{minipage}%
+\hfill
+\begin{minipage}[t]{0.45\textwidth}
+    \vspace{0pt}
+    \rule{\textwidth}{0.5pt} \\[2mm] % Second signature line as seen in screenshot
+    ~ % Empty space below the line
+\end{minipage}
+
+\clearpage
+
+% --- Abstract ---
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+Plastic pollution in aquatic ecosystems has become a critical environmental concern, with a large fraction of debris accumulating beneath the water surface where it remains difficult to detect and monitor. Conventional monitoring approaches rely heavily on manual inspection or remotely operated vehicles, which are costly, time-consuming, and limited in spatial coverage. Autonomous underwater robots equipped with intelligent perception systems offer a scalable solution for large-scale environmental monitoring and detection of submerged plastic debris.
+
+The main objectives of this research includes developing an artificial intelligence–driven perception framework for autonomous underwater robots capable of detecting submerged plastic waste in challenging underwater environments. Underwater perception is affected by several factors including light absorption, scattering, turbidity, color distortion and dynamic illumination conditions, which significantly degrade image quality and reduce the reliability of conventional object detection models. Addressing these challenges requires the integration of robust image enhancement techniques, deep learning based detection algorithms, and temporal tracking methods to improve detection accuracy and stability.
+
+The research focuses on the development of a modular perception architecture, including underwater image preprocessing, deep learning-based object detection, temporal tracking, and possible integration of multiple sensors. The first phase of the research was based on the existing literature on underwater computer vision, underwater marine debris detection, and AI-based robotic perception. Additionally, the research was based on the ongoing research work of the students, including baseline detection models, image enhancement models, and multi-robot monitoring models.
+
+The research gaps have been identified based on the research works completed during the first phase of the research, including the limitations of the data set, the instability of the frame-based detection models, and the lack of integrated perception models for underwater robotic applications. A conceptual architecture has been developed based on the research gaps identified during the first phase of the research. The architecture includes the integration of the image enhancement models, deep learning-based detection models, and temporal tracking models for the development of a more robust underwater robotic perception system.
+
+\clearpage
+
+% --- Acknowledgements ---
+\chapter*{Acknowledgements}
+\addcontentsline{toc}{chapter}{Acknowledgements}
+
+I would like to express my sincere gratitude to Prof. Prasad Patil for assigning me this project and for his invaluable guidance in providing relevant research papers that laid the foundation for my study. His continuous support and insightful feedback have been instrumental in shaping the direction of this work.
+
+Finally, I am grateful to my peers, mentors, HoD, workshop people and the research community, whose collective knowledge and discussions have provided inspiration and guidance throughout this project. Their support has been invaluable in overcoming challenges and improving the overall quality of this research.
+
+\clearpage
+
+% --- Table of Contents ---
+\tableofcontents
+\clearpage
+
+% --- Chapter 1: Introduction ---
+\chapter{Introduction}
+
+Through simulations of ship maneuvering, we can better understand the dynamics of vessels and be able to foresee the behavior of ships. Mathematical models are often used to simulate the motion of marine vehicles in a computational environment in which the effects of hydrodynamic forces, environmental disturbances and control inputs can be analysed. The aim of this work is to develop a six-degree-of-freedom (6-DOF) nonlinear dynamic model of a ship through python simulation.
+
+The simulation integrates rigid body movements of the ship along with hydrodynamic forces; thrust and rudder control input; and environmental disturbances generated by wind, sea current and wave excitation. The model formulation aligns with the general approach of ship motion simulations. The model uses the equations of motion derived from Newton’s laws and solved numerically in time.
+
+Through integration of the governing differential equations, the model determines changes in the ship's velocity, orientation, and position. By using this method, it is possible to simulate the trajectory of the vessel and its motion response for a specified time horizon. The coded structure also reflects the modular modelling approach used in ship manoeuvring studies where separate components of the dynamics such as hydrodynamic forces environmental disturbances and propulsion are calculated separately and summed to form the final force vector acting on the ship.
+
+% --- Chapter 2: Coordinate Frames and Motion Variables ---
+\chapter{Coordinate Frames and Motion Variables}
+
+Two coordinate frames are used.
+
+\section{Earth‑Fixed Frame}
+The global position vector is:
+\begin{equation}
+    \eta_1 = \begin{bmatrix} x \\ y \\ z \end{bmatrix}
+\end{equation}
+Where:
+\begin{itemize}
+    \item $x$ : North position
+    \item $y$ : East position
+    \item $z$ : Downward position
+\end{itemize}
+
+The ship orientation is defined by Euler angles:
+\begin{equation}
+    \eta_2 = \begin{bmatrix} \phi \\ \theta \\ \psi \end{bmatrix}
+\end{equation}
+Where:
+\begin{itemize}
+    \item $\phi$ : roll
+    \item $\theta$ : pitch
+    \item $\psi$ : yaw (heading)
+\end{itemize}
+
+\section{Body‑Fixed Frame}
+The velocity vector is given by:
+\begin{equation}
+    \nu = \begin{bmatrix} u \\ v \\ w \\ p \\ q \\ r \end{bmatrix}
+\end{equation}
+Where:
+\begin{itemize}
+    \item $u$ : surge velocity
+    \item $v$ : sway velocity
+    \item $w$ : heave velocity
+    \item $p$ : roll rate
+    \item $q$ : pitch rate
+    \item $r$ : yaw rate
+\end{itemize}
+
+% --- Chapter 3: Dynamic Model Equations ---
+\chapter{Dynamic Model Equations}
+
+The ship dynamics are expressed as:
+\begin{equation}
+    M\dot{\nu} = \tau - g(\eta)
+\end{equation}
+where
+\begin{itemize}
+    \item $M$ : mass and inertia matrix
+    \item $\nu$ : velocity vector
+    \item $\tau$ : external force vector
+    \item $g(\eta)$ : restoring forces
+\end{itemize}
+
+This equation represents the balance between inertial effects and external forces acting on the ship. The simulation numerically computes the acceleration; which is then integrated over time to obtain velocity and position.
+\begin{equation}
+    \dot{\nu} = M^{-1} (\tau - g(\eta))
+\end{equation}
+
+\section{Mass and Inertia Matrix}
+\textbf{Rigid Body Inertia} \\
+The rigid body inertia matrix represents the physical mass and inertia distribution of the vessel. This matrix includes ship mass, moments of inertia, and center of gravity offsets. The matrix is defined as:
+\begin{equation}
+    M_{RB} = \begin{bmatrix}
+    m & 0 & 0 & 0 & m z_G & -m y_G \\
+    0 & m & 0 & -m z_G & 0 & m x_G \\
+    0 & 0 & m & m y_G & -m x_G & 0 \\
+    0 & -m z_G & m y_G & I_{xx} & 0 & 0 \\
+    m z_G & 0 & -m x_G & 0 & I_{yy} & 0 \\
+    -m y_G & m x_G & 0 & 0 & 0 & I_{zz}
+    \end{bmatrix}
+\end{equation}
+
+\textbf{Added Mass} \\
+When a ship accelerates in water, it must also accelerate some surrounding water. This effect is called added mass. The simulation includes hydrodynamic added inertia coefficients that modify the effective mass of the vessel. The added mass matrix is combined with the rigid body matrix to form the total mass matrix:
+\begin{equation}
+    M = M_{RB} + M_A
+\end{equation}
+
+\section{Hydrodynamic Forces}
+Hydrodynamic forces represent the interaction between the ship hull and surrounding water. In the simulation these forces are modeled using nonlinear functions of velocity.
+
+\textbf{Surge Force} \\
+The surge force is defined as:
+\begin{equation}
+    X_h = X_{u|u|} u|u| + X_{vr} vr
+\end{equation}
+Where $X_{u|u|}$ is the Surge Drag Coefficient and $X_{vr}$ is the Cross Coupling Term.
+
+\textbf{Sway Force} \\
+The sway force accounts for lateral hydrodynamic resistance:
+\begin{equation}
+    Y_h = Y_{uv}uv + Y_{ur}ur + Y_{v|v|}v|v| + Y_{uu}f + Y_{\delta uu}\delta u^2
+\end{equation}
+This equation also includes rudder effects through the rudder angle $\delta$.
+
+\textbf{Roll Moment} \\
+The roll moment includes hydrodynamic coupling and restoring stiffness:
+\begin{equation}
+    K_h = K_{uv}uv + K_{ur}ur + K_{\phi\phi\phi}\phi^3 + K_{pp}p
+\end{equation}
+The cubic roll term represents nonlinear restoring stiffness.
+
+\textbf{Yaw Moment} \\
+The yaw moment equation is:
+\begin{equation}
+    N_h = N_{uv}uv + N_{ur}ur + N_{\delta uu}u^2\delta
+\end{equation}
+The final term represents rudder-induced turning moment.
+
+\section{Environmental Disturbances}
+The simulation includes three environmental effects.
+
+\textbf{Ocean Current} \\
+Ocean current changes the relative velocity between water and the vessel. Relative velocities are computed as:
+\begin{align}
+    u_r &= u - u_c \\
+    v_r &= v - v_c
+\end{align}
+where the current velocity components depend on current speed and direction.
+
+\textbf{Wind Forces} \\
+Wind loads acting on the vessel are modeled using aerodynamic drag.
+\begin{align}
+    X_{wind} &= \frac{1}{2} \rho_a V^2 C_{wX} A_x \\
+    Y_{wind} &= \frac{1}{2} \rho_a V^2 C_{wY} A_y \\
+    N_{wind} &= \frac{1}{2} \rho_a V^2 C_{wN} A_y L
+\end{align}
+
+\textbf{Wave Forces} \\
+Wave effects are modeled as time-varying sinusoidal forces:
+\begin{align}
+    X_{wave} &= A_x \sin(\omega t) \\
+    Y_{wave} &= A_y \cos(\omega t)
+\end{align}
+These terms introduce periodic disturbances in surge and sway directions.
+
+\section{Propulsion Model}
+The propulsion system generates thrust based on propeller rotational speed. The thrust model used in the code is:
+\begin{equation}
+    T = \frac{n}{n_{max}} T_{max}
+\end{equation}
+Where: $n$ is propeller speed, $n_{max}$ is maximum propeller speed, and $T_{max}$ is maximum thrust.
+
+\section{Actuator Dynamics}
+Two control inputs are included in the simulation.
+
+\textbf{Propeller command:} \\
+The commanded propeller speed is applied through a first-order actuator model:
+\begin{equation}
+    \dot{n} = \frac{n_{cmd} - n}{5}
+\end{equation}
+This models the physical delay in changing propeller speed.
+
+\textbf{Rudder Command:} \\
+Rudder angle dynamics are given by:
+\begin{equation}
+    \dot{\delta} = \frac{\delta_{cmd} - \delta}{2}
+\end{equation}
+This represents the limited speed of rudder actuation.
+
+\section{Kinematic Transformation}
+The ship velocities defined in the body frame must be transformed to the earth frame to compute the change in position. The transformation depends on Euler angles and produces:
+\begin{equation}
+    \dot{\eta} = J(\eta)\nu
+\end{equation}
+where $J(\eta)$ is the transformation matrix.
+
+% --- Chapter 4: Numerical Simulation ---
+\chapter{Numerical Simulation}
+
+The system of differential equations is solved using a numerical integrator.
+
+\textbf{Simulation conditions:}
+\begin{itemize}
+    \item Simulation time: 200 s
+    \item Initial surge velocity: 2 m/s
+    \item Propeller command: 120 rpm
+    \item Rudder angle: 0 deg
+\end{itemize}
+
+\section{Simulation Outputs}
+The simulation generates:
+\begin{itemize}
+    \item Time histories
+    \item position (x,y,z)
+    \item velocities (u,v,w)
+    \item Euler angles ($\phi, \theta, \psi$)
+\end{itemize}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{time_vs_ship_state_variables.png}
+    \caption{Time vs Ship State Variables (Straight Line Maneuver)}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{trajectory_plot.png}
+    \caption{Straight Line Maneuver Trajectory}
+\end{figure}
+
+% --- Chapter 5: Conclusion ---
+\chapter{Conclusion}
+
+A nonlinear six-degree-of-freedom ship maneuvering model was implemented in Python to simulate the motion of a vessel under propulsion and environmental disturbances. The model includes rigid body dynamics, hydrodynamic forces, propulsion effects, rudder control inputs, and environmental loads due to wind, waves, and ocean current.
+
+The governing equations of motion were numerically integrated using a standard differential equation solver to obtain the time evolution of the vessel states. The results of the simulation include both time histories of motion variables and the trajectory of the vessel. The implemented model provides a framework for analyzing ship motion and can be extended to include additional control systems or more detailed hydrodynamic models.
+
+% --- Chapter 6: Future Work ---
+\chapter{Future Work}
+
+The current ship maneuvering simulation models the nonlinear 6-DOF dynamics of the vessel under propulsion and environmental disturbances. As a continuation of this work, a control system will be implemented to enable automated maneuver execution and evaluate vessel maneuvering characteristics.
+
+The next stage of the research will focus on implementing a Proportional–Integral–Derivative (PID) controller for rudder control in order to simulate a Zig-Zag maneuver test. The Zig-Zag maneuver is a standard maneuvering test used in naval architecture to evaluate the course-keeping ability and directional stability of a ship.
+
+In this maneuver, the rudder is alternately commanded to positive and negative angles (for example $\pm 10^\circ$ or $\pm 20^\circ$) once the vessel heading deviates by a specified threshold angle. The PID controller will regulate the rudder input in order to achieve the required heading response during the maneuver.
+
+\clearpage
+
+% --- Student Details Table ---
+\vspace*{1cm}
+{\Large \textbf{Details of the Student:}}
+\vspace{0.5cm}
+
+\begin{table}[h!]
+    \centering
+    \renewcommand{\arraystretch}{1.4}
+    \begin{tabularx}{\textwidth}{|>{\raggedright\arraybackslash\hsize=0.35\hsize}X|>{\raggedright\arraybackslash\hsize=0.65\hsize}X|}
+        \hline
+        \textbf{Details} & \\
+        \hline
+        Student Name (as per ERP) & YASHWANTH KRISHNA CHITYALA \\
+        \hline
+        Roll Number / ID Number & 2025PHRP0907G \\
+        \hline
+        BE/ME Program & PhD \\
+        \hline
+        Specialization & Mechanical Engineering \\
+        \hline
+        Department & Mechanical Engineering \\
+        \hline
+        Institute / University & BITS G \\
+        \hline
+        Mobile Number & 9912749300 \\
+        \hline
+        Alternate mobile number & \\
+        \hline
+        College Email ID & P20250907@goa.bits-pilani.ac.in \\
+        \hline
+        Personal Mail Id & Yashwanth.chityala@gmail.com \\
+        \hline
+        Project / Thesis Title & Smart Marine Vessels for AI Driven Plastic Cleanup \\
+        \hline
+        Guide / Supervisor Name & Dr Prasad V Patil \\
+        \hline
+        Co-Guide (if any) & \\
+        \hline
+        Semester \& Academic Year & II, 2025-26 \\
+        \hline
+        Drive link (shared by Prof. Patil) & \\
+        \hline
+        Place & Goa \\
+        \hline
+        Date of Submission & \\
+        \hline
+        Student Signature & \\
+        \hline
+    \end{tabularx}
+\end{table}
+
+\end{document}

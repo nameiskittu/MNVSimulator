@@ -1,0 +1,48 @@
+name: Monthly AI Engineering Report
+on:
+  schedule:
+    - cron: '0 0 1 * *' # Runs at midnight on the 1st of every month
+  workflow_dispatch: # Allows you to trigger it manually for testing
+
+jobs:
+  generate-report:
+    runs-on: windows-latest
+    permissions:
+      contents: write # Needed to push the PDF back to your repo
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Gets full history so AI can compare dates
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          pip install google-genai
+          # Add any other robotics-related python libs you use
+
+      - name: Run AI Comparison & Generate LaTeX
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python scripts/generate_report.py
+
+      - name: Set up Tectonic (LaTeX)
+        uses: wtfjoke/setup-tectonic@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compile PDF
+        run: tectonic report/main.tex
+
+      - name: Commit and Push Report
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add report/main.pdf report/updates.tex
+          git commit -m "Automated Monthly Report Update" || exit 0
+          git push
