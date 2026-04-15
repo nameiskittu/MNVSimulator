@@ -216,9 +216,15 @@ def plot_turning_circle(results):
 # ──────────────────────────────────────────────
 # ZIGZAG — COMPREHENSIVE DASHBOARD
 # ──────────────────────────────────────────────
-def plot_zigzag_dashboard(t, y, delta_cmd, delta_zz, X, Y, K, N):
+def plot_zigzag_dashboard(t, y, delta_cmd, delta_zz, X, Y, K, N,
+                          setpoint=None, mode='open-loop'):
     """
     Combines Trajectory, ITTC Standard, Forces, and Key States into a single window.
+
+    Args:
+        t, y, delta_cmd, delta_zz, X, Y, K, N  — standard zigzag outputs
+        setpoint   [array | None]  — heading setpoint history [deg], for closed-loop only
+        mode       str             — 'open-loop' or 'closed-loop' (used in title)
     """
     psi_wrapped = (np.rad2deg(y[11]) + 180) % 360 - 180
     x_ = y[6]
@@ -228,8 +234,9 @@ def plot_zigzag_dashboard(t, y, delta_cmd, delta_zz, X, Y, K, N):
     r = np.rad2deg(y[5])
     phi = np.rad2deg(y[9])
 
+    mode_label = ' — Closed-Loop PID' if mode == 'closed-loop' else ' — Open-Loop'
     fig = plt.figure(figsize=(18, 12))
-    _title_style(fig, f"{int(delta_zz)}/{int(delta_zz)} ZigZag Maneuver")
+    _title_style(fig, f"{int(delta_zz)}/{int(delta_zz)} ZigZag Maneuver{mode_label}")
     
     # 4 rows, 4 columns layout
     gs = gridspec.GridSpec(4, 4, figure=fig, hspace=0.6, wspace=0.4,
@@ -264,6 +271,9 @@ def plot_zigzag_dashboard(t, y, delta_cmd, delta_zz, X, Y, K, N):
     # 2. ITTC STANDARD (Spans top right: 2 rows, 2 columns)
     # Heading (Row 0, Cols 2-3)
     ax_psi = fig.add_subplot(gs[0, 2:4])
+    if setpoint is not None:
+        ax_psi.step(t, setpoint, color=C_PSI2, lw=1.0, ls='--', alpha=0.75,
+                    where='post', label='ψ_desired (setpoint)')
     _line(ax_psi, t, psi_wrapped, C_PSI, label="ψ  (heading)")
     _hline(ax_psi, delta_zz, C_TRIG)
     _hline(ax_psi, -delta_zz, C_TRIG)
